@@ -114,7 +114,8 @@ class INIT_STAGE_G(nn.Module):
         self.upsample2 = upBlock(ngf // 2, ngf // 4)
         self.upsample3 = upBlock(ngf // 4, ngf // 8)
         self.upsample4 = upBlock(ngf // 8, ngf // 16)
-        self.upsample5 = upBlock(ngf // 16, ngf // 16)
+        self.upsample5 = upBlock(ngf // 16, ngf // 32)
+        self.upsample6 = upBlock(ngf // 32, ngf // 32)
 
 
     def forward(self, z_code, code):
@@ -127,6 +128,7 @@ class INIT_STAGE_G(nn.Module):
         out_code = self.upsample3(out_code)
         out_code = self.upsample4(out_code)
 	out_code = self.upsample5(out_code)
+	out_code = self.upsample6(out_code)
 
         return out_code
 
@@ -203,16 +205,16 @@ class G_NET(nn.Module):
         self.gf_dim = cfg.GAN.GF_DIM
         self.define_module()
 	self.upsampling = Upsample(scale_factor = 2, mode = 'bilinear')
-	self.scale_fimg = nn.UpsamplingBilinear2d(size = [126, 126])
+	self.scale_fimg = nn.UpsamplingBilinear2d(size=[cfg.TRAIN.CROP_IMG_SIZE, cfg.TRAIN.CROP_IMG_SIZE])
 
     def define_module(self):
 
         #Background stage
-        self.h_net1_bg = INIT_STAGE_G(self.gf_dim * 16, 2)
+        self.h_net1_bg = INIT_STAGE_G(self.gf_dim * 16 * (cfg.TRAIN.IMG_SIZE//128), 2)
         self.img_net1_bg = GET_IMAGE_G(self.gf_dim) # Background generation network
         
         # Parent stage networks
-        self.h_net1 = INIT_STAGE_G(self.gf_dim * 16, 1)
+        self.h_net1 = INIT_STAGE_G(self.gf_dim * 16 * (cfg.TRAIN.IMG_SIZE//128), 1)
         self.h_net2 = NEXT_STAGE_G(self.gf_dim, use_hrc = 1) 
         self.img_net2 = GET_IMAGE_G(self.gf_dim // 2)  # Parent foreground generation network 
         self.img_net2_mask= GET_MASK_G(self.gf_dim // 2) # Parent mask generation network 
@@ -294,15 +296,18 @@ def downBlock(in_planes, out_planes):
 
 def encode_parent_and_child_img(ndf): # Defines the encoder network used for parent and child image
     encode_img = nn.Sequential(
-        nn.Conv2d(3, ndf, 4, 2, 1, bias=False),
+        nn.Conv2d(3, ndf, 4, 2, 1, bias=False), # (256+2)-4/2 + 1 = 128
         nn.LeakyReLU(0.2, inplace=True),
-        nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False),
+        nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False), # (128+2)-4/2 + 1 = 64
         nn.BatchNorm2d(ndf * 2),
         nn.LeakyReLU(0.2, inplace=True),
-        nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False),
+        nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False), # (64+2)-4/2 + 1 = 32
         nn.BatchNorm2d(ndf * 4),
         nn.LeakyReLU(0.2, inplace=True),
-        nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False),
+        nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False), # (32+2)-4/2 + 1 = 16
+        nn.BatchNorm2d(ndf * 8),
+        nn.LeakyReLU(0.2, inplace=True)
+	nn.Conv2d(ndf * 8, ndf * 8, 4, 2, 1, bias=False), # (16+2)-4/2 + 1 = 8
         nn.BatchNorm2d(ndf * 8),
         nn.LeakyReLU(0.2, inplace=True)
     )
@@ -379,12 +384,12 @@ class D_NET(nn.Module):
 		return [classi_score, rf_score]
 
 	elif self.stg_no > 0:
-        	x_code = self.img_code_s16(x_var)
-        	x_code = self.img_code_s32(x_code)
-        	x_code = self.img_code_s32_1(x_code)
-                h_c_code = self.jointConv(x_code)
-                code_pred = self.logits(h_c_code) # Predicts the parent code and child code in parent and child stage respectively
-                rf_score = self.uncond_logits(x_code) # This score is not used in parent stage while training
+        	x_code = self.img_code_s16(x_var) # ([batch, 512, 4, 4])
+        	x_code = self.img_code_s32(x_code) # ([batch, 1024, 4, 4])
+        	x_code = self.img_code_s32_1(x_code) # ([batch, 512, 4, 4])
+                h_c_code = self.jointConv(x_code) # ([batch, 512, 4, 4])
+                code_pred = self.logits(h_c_code) # ([batch, 20, 1, 1]) Predicts the parent code and child code in parent and child stage respectively
+                rf_score = self.uncond_logits(x_code) # ([batch, 1, 1, 1]) This score is not used in parent stage while training
             	return [code_pred.view(-1, self.ef_dim), rf_score.view(-1)]
 
 
