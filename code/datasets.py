@@ -69,7 +69,7 @@ def get_imgs(img_path, imsize, bbox=None,
     # We resize the full image to be 126 X 126 (instead of 128 X 128)  for the full coverage of the input (full) image by 
     # the receptive fields of the final convolution layer of background discriminator
     
-    my_crop_width = 126	
+    my_crop_width = cfg.TRAIN.CROP_IMG_SIZE	
     re_fimg = transforms.Scale(int(my_crop_width * 76 / 64))(fimg)
     re_width, re_height = re_fimg.size
 
@@ -114,6 +114,7 @@ def get_imgs(img_path, imsize, bbox=None,
 
 class Dataset(data.Dataset):
     def __init__(self, data_dir, base_size=64, transform = None):
+	base_size = base_size * (cfg.TRAIN.IMG_SIZE//128)
 
         self.transform = transform
         self.norm = transforms.Compose([
