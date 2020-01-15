@@ -253,9 +253,9 @@ class FineGAN_trainer(object):
                         y2 =  self.warped_bbox[3][i]
 
                         a1 = max(torch.tensor(0).float().cuda(), torch.ceil((x1 - self.recp_field)/self.patch_stride))
-                        a2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((126 - self.recp_field) - x2)/self.patch_stride)) + 1
+                        a2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((cfg.TRAIN.CROP_IMG_SIZE - self.recp_field) - x2)/self.patch_stride)) + 1
                         b1 = max(torch.tensor(0).float().cuda(), torch.ceil((y1 - self.recp_field)/self.patch_stride))
-                        b2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((126 - self.recp_field) - y2)/self.patch_stride)) + 1
+                        b2 = min(torch.tensor(self.n_out - 1).float().cuda(), torch.floor((self.n_out - 1) - ((cfg.TRAIN.CROP_IMG_SIZE - self.recp_field) - y2)/self.patch_stride)) + 1
 
 			if (x1 != x2 and y1 != y2):
                         	weights_real[i, :, a1.type(torch.int) : a2.type(torch.int) , b1.type(torch.int) : b2.type(torch.int)] = 0.0
@@ -378,9 +378,10 @@ class FineGAN_trainer(object):
         hard_noise = \
             Variable(torch.FloatTensor(self.batch_size, nz).normal_(0, 1)).cuda()
 	
-	self.patch_stride = float(4)    # Receptive field stride given the current discriminator architecture for background stage 
+	self.patch_stride = float(cfg.PATCH_STRIDE_SIZE)    # Receptive field stride given the current discriminator architecture for background stage 
 	self.n_out = 24                 # Output size of the discriminator at the background stage; N X N where N = 24
-	self.recp_field = 34            # Receptive field of each of the member of N X N
+	# see: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/39#issuecomment-368239697
+	self.recp_field = cfg.TRAIN.RECP_FIELD_SIZE            # Receptive field of each of the member of N X N
 
 
         if cfg.CUDA:
