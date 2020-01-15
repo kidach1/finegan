@@ -378,7 +378,7 @@ class FineGAN_trainer(object):
         hard_noise = \
             Variable(torch.FloatTensor(self.batch_size, nz).normal_(0, 1)).cuda()
 	
-	self.patch_stride = float(cfg.PATCH_STRIDE_SIZE)    # Receptive field stride given the current discriminator architecture for background stage 
+	self.patch_stride = float(cfg.TRAIN.PATCH_STRIDE_SIZE)    # Receptive field stride given the current discriminator architecture for background stage 
 	self.n_out = 24                 # Output size of the discriminator at the background stage; N X N where N = 24
 	# see: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/issues/39#issuecomment-368239697
 	self.recp_field = cfg.TRAIN.RECP_FIELD_SIZE            # Receptive field of each of the member of N X N
