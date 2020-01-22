@@ -296,18 +296,18 @@ def downBlock(in_planes, out_planes):
 
 def encode_parent_and_child_img(ndf): # Defines the encoder network used for parent and child image
     encode_img = nn.Sequential(
-        nn.Conv2d(3, ndf, 4, 2, 1, bias=False), # (256+2)-4/2 + 1 = 128
+        nn.Conv2d(3, ndf, 4, 2, 1, bias=False), # ((256+2)-4)/2 + 1 = 128
         nn.LeakyReLU(0.2, inplace=True),
-        nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False), # (128+2)-4/2 + 1 = 64
+        nn.Conv2d(ndf, ndf * 2, 4, 2, 1, bias=False), # ((128+2)-4)/2 + 1 = 64
         nn.BatchNorm2d(ndf * 2),
         nn.LeakyReLU(0.2, inplace=True),
-        nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False), # (64+2)-4/2 + 1 = 32
+        nn.Conv2d(ndf * 2, ndf * 4, 4, 2, 1, bias=False), # ((64+2)-4)/2 + 1 = 32
         nn.BatchNorm2d(ndf * 4),
         nn.LeakyReLU(0.2, inplace=True),
-        nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False), # (32+2)-4/2 + 1 = 16
+        nn.Conv2d(ndf * 4, ndf * 8, 4, 2, 1, bias=False), # ((32+2)-4)/2 + 1 = 16
         nn.BatchNorm2d(ndf * 8),
         nn.LeakyReLU(0.2, inplace=True)
-	nn.Conv2d(ndf * 8, ndf * 8, 4, 2, 1, bias=False), # (16+2)-4/2 + 1 = 8
+	nn.Conv2d(ndf * 8, ndf * 8, 4, 2, 1, bias=False), # ((16+2)-4)/2 + 1 = 8
         nn.BatchNorm2d(ndf * 8),
         nn.LeakyReLU(0.2, inplace=True)
     )
